@@ -37,7 +37,7 @@ func getItem(urlid string) (*shortURL, error) {
 	// to parse this straight into the fields of a struct. Note:
 	// UnmarshalListOfMaps also exists if you are working with multiple
 	// items.
-	link := new(shortURL)
+	loc := new(location)
 	err = dynamodbattribute.UnmarshalMap(result.Item, link)
 	if err != nil {
 		return nil, err
@@ -46,6 +46,7 @@ func getItem(urlid string) (*shortURL, error) {
 	return link, nil
 }
 
+/*
 func putItem(link *shortURL) error {
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String("URLs"),
@@ -64,4 +65,4 @@ func putItem(link *shortURL) error {
 
 	_, err := db.PutItem(input)
 	return err
-}
+}*/

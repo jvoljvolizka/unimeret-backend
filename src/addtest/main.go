@@ -37,6 +37,18 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 
 	hash := geohash.Encode(input.Lat, input.Lng)
 
+	var newloc location
+	newloc.Hash = hash
+	newloc.Locid = "T-" + hash
+
+	err = putItem(&newloc)
+
+	if err != nil {
+		return events.APIGatewayProxyResponse{
+			StatusCode: http.StatusBadRequest,
+			Body:       err.Error(),
+		}, nil
+	}
 	//6 150m~
 	//hash := fmt.Sprintf("%f", input.lat)
 	//hash := input.lat
@@ -63,7 +75,7 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       hash,
+		Body:       "got it ! btw your life is still just a sad void",
 	}, nil
 }
 
