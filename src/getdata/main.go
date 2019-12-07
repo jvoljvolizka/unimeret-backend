@@ -37,33 +37,25 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 
 	hash := geohash.Encode(input.Lat, input.Lng)
 
-	//6 150m~
-	//hash := fmt.Sprintf("%f", input.lat)
-	//hash := input.lat
+	hash = hash //im sorry Holly gods of software
 
-	//radius := 100
-
-	/*check, _ := getItem(newURL.ID)
-
-	if check != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "id already exists",
-		}, nil
-	}
-
-	err = putItem(&newURL)
-
+	locations, err := scantest()
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       err.Error(),
 		}, nil
-	}*/
+	}
+
+	var resp string
+	for _, loc := range locations {
+		resp = resp + " - " + loc.Hash
+		//resp = append(resp, loc.Hash)
+	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       hash,
+		Body:       resp,
 	}, nil
 }
 

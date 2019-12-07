@@ -19,8 +19,6 @@ type inlocation struct {
 	Lng float64 `json:"lng"`
 }
 
-const precision int = 6
-
 func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	var input inlocation
@@ -49,29 +47,6 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 			Body:       err.Error(),
 		}, nil
 	}
-	//6 150m~
-	//hash := fmt.Sprintf("%f", input.lat)
-	//hash := input.lat
-
-	//radius := 100
-
-	/*check, _ := getItem(newURL.ID)
-
-	if check != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       "id already exists",
-		}, nil
-	}
-
-	err = putItem(&newURL)
-
-	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
-	}*/
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
