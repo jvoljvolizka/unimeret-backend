@@ -14,8 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 )
 
-type newUser struct {
-	Email    string `json:"email"`
+type user struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -26,13 +25,13 @@ func SecretHash(username, clientID, clientSecret string) string {
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 
-func createUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func authUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	const userPoolID = "eu-central-1_PeQQEcL03"
 	const appClientId = "5n3ndtvdqbgfvnagbrjtlfdnvd"
 	const clientSecret = "ep6j8m81mjjpj02olb70q8oucdmj4028gqtvk1an51esukpg8o6"
 
-	var inputUser newUser
+	var inputUser user
 	body := []byte(req.Body)
 
 	err := json.Unmarshal(body, &inputUser)
@@ -45,10 +44,9 @@ func createUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	}
 
 	userName := inputUser.Username
-	emailID := inputUser.Email
 	password := inputUser.Password
 
-	if emailID == "" || userName == "" || password == "" {
+	if userName == "" || password == "" {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
 			Body:       "You forgot something mate",
@@ -70,26 +68,22 @@ func createUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 
 	cognitoClient := cognitoidentityprovider.New(sess)
 
-	newUserData := &cognitoidentityprovider.SignUpInput{
-
-		UserAttributes: []*cognitoidentityprovider.AttributeType{
-			{
-				Name:  aws.String("email"),
-				Value: aws.String(emailID),
-			},
+	params := cognitoidentityprovider.InitiateAuthInput{
+		AuthFlow: aws.String("USER_PASSWORD_AUTH"),
+		AuthParameters: map[string]*string{
+			"USERNAME":    aws.String(userName),
+			"PASSWORD":    aws.String(password),
+			"SECRET_HASH": aws.String(SecretHash(userName, appClientId, clientSecret)),
 		},
+		ClientId: aws.String(appClientId),
 	}
-
-	newUserData.SetClientId(appClientId)
-	newUserData.SetUsername(userName)
-	newUserData.SetPassword(password)
-	newUserData.SetSecretHash(SecretHash(userName, appClientId, clientSecret))
 
 	//newUserData.SetUserPoolId(userPoolID)
 	//
 
 	//cognitoClient.
-	_, err = cognitoClient.SignUp(newUserData) //AdminCreateUser(newUserData)
+	authResponse, err := cognitoClient.InitiateAuth(&params)
+
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
@@ -99,11 +93,11 @@ func createUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       "User created",
+		Body:       authResponse.String(),
 	}, nil
 
 }
 
 func main() {
-	lambda.Start(createUser)
+	lambda.Start(authUser)
 }
