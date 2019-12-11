@@ -38,8 +38,8 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 	hash := geohash.Encode(input.Lat, input.Lng)
 
 	hash = hash //im sorry Holly gods of software
-
-	locations, err := scantest()
+	sendhash := hash[:precision]
+	locations, err := scantest(sendhash)
 	if err != nil {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,

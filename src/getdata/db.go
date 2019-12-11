@@ -18,13 +18,13 @@ var db = dynamodb.New(session.New(), aws.NewConfig().WithRegion("eu-central-1"))
 
 // snippet-end:[dynamodb.go.scan_items]
 
-func scantest( /* locid string */ ) ([]*location, error) {
+func scantest(startHash string) ([]*location, error) {
 
 	tableName := "unimeret-location"
 
 	// Create the Expression to fill the input struct with.
 	// Get all movies in that year; we'll pull out those with a higher rating later
-	filt := expression.Name("hash").BeginsWith("swg")
+	filt := expression.Name("hash").BeginsWith(startHash)
 
 	proj := expression.NamesList(expression.Name("hash"), expression.Name("locid"))
 
