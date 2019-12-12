@@ -91,9 +91,11 @@ func authUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse
 		}, nil
 	}
 
+	jsondata, _ := json.Marshal(authResponse)
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       authResponse.String(),
+		Body:       string(jsondata),
 	}, nil
 
 }

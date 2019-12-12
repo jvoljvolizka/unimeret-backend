@@ -64,9 +64,11 @@ func tokenRead(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRespons
 		}, nil
 	}
 
+	jsondata, _ := json.Marshal(userInfo)
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       userInfo.String(),
+		Body:       string(jsondata),
 	}, nil
 
 }
