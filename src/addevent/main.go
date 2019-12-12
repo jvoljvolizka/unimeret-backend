@@ -12,11 +12,6 @@ import (
 	"github.com/mmcloughlin/geohash"
 )
 
-type location struct {
-	Hash  string `json:"hash"`
-	Locid string `json:"locid"`
-}
-
 //| userid     | eventname      | max_person _nullable_ |start_date | finish_date | body |
 
 type inEvent struct {
@@ -37,8 +32,15 @@ type storeEvent struct {
 	EndDate   string `json:"EndDate"`
 	Body      string `json:"Body"`
 	UserID    string `json:"UserID"`
-	lochash   string `json:"lochash"`
-	locID     string `json:"locID"`
+	Lochash   string `json:"lochash"`
+	LocID     string `json:"locID"`
+}
+
+func reterr(err error) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusBadRequest,
+		Body:       err.Error(),
+	}, nil
 }
 
 func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -49,10 +51,7 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 	err := json.Unmarshal(body, &input)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	/*	if input.AccessToken == "" || input.Body == "" || input.EndDate == "" || input.EventName == "" || input.Lat == "" || input.Lng == "" || input.MaxPerson == "" || input.StartDate == "" {
@@ -68,10 +67,7 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 	)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	locHash := geohash.Encode(input.Lat, input.Lng)
@@ -85,10 +81,7 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 	userInfo, err := cognitoClient.GetUser(&params)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	var newEvent storeEvent
@@ -99,21 +92,18 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 	newEvent.MaxPerson = input.MaxPerson
 	newEvent.StartDate = input.StartDate
 	newEvent.UserID = *userInfo.UserAttributes[0].Value
-	newEvent.lochash = locHash
-	newEvent.locID = *userInfo.UserAttributes[0].Value + "-" + locHash
+	newEvent.Lochash = locHash
+	newEvent.LocID = *userInfo.UserAttributes[0].Value + "-" + locHash
 
 	err = putItem(&newEvent)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       "got it ! btw your life is still just a sad void",
+		Body:       `{ "result" : "success" }`,
 	}, nil
 }
 

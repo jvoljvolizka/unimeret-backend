@@ -47,10 +47,10 @@ func putItem(inputEvent *storeEvent) error {
 				S: aws.String(inputEvent.UserID),
 			},
 			"lochash": {
-				S: aws.String(inputEvent.lochash),
+				S: aws.String(inputEvent.Lochash),
 			},
 			"locID": {
-				S: aws.String(inputEvent.locID),
+				S: aws.String(inputEvent.LocID),
 			},
 		},
 	}

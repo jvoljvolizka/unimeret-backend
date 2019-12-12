@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -25,11 +26,18 @@ func SecretHash(username, clientID, clientSecret string) string {
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
 
+func reterr(err error) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusBadRequest,
+		Body:       err.Error(),
+	}, nil
+}
+
 func authUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
-	const userPoolID = "eu-central-1_PeQQEcL03"
-	const appClientId = "5n3ndtvdqbgfvnagbrjtlfdnvd"
-	const clientSecret = "ep6j8m81mjjpj02olb70q8oucdmj4028gqtvk1an51esukpg8o6"
+	//userPoolID := os.Getenv("USERPOOL")
+	appClientId := os.Getenv("CLIENTID")
+	clientSecret := os.Getenv("CLIENTSECRET")
 
 	var inputUser user
 	body := []byte(req.Body)
@@ -37,19 +45,13 @@ func authUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse
 	err := json.Unmarshal(body, &inputUser)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
-	userName := inputUser.Username
-	password := inputUser.Password
-
-	if userName == "" || password == "" {
+	if inputUser.Username == "" || inputUser.Password == "" {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "You forgot something mate",
+			Body:       `{"error" : "empty field"}`,
 		}, nil
 	}
 
@@ -58,10 +60,7 @@ func authUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse
 	)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	// Create Cognito service client
@@ -71,27 +70,24 @@ func authUser(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse
 	params := cognitoidentityprovider.InitiateAuthInput{
 		AuthFlow: aws.String("USER_PASSWORD_AUTH"),
 		AuthParameters: map[string]*string{
-			"USERNAME":    aws.String(userName),
-			"PASSWORD":    aws.String(password),
-			"SECRET_HASH": aws.String(SecretHash(userName, appClientId, clientSecret)),
+			"USERNAME":    aws.String(inputUser.Username),
+			"PASSWORD":    aws.String(inputUser.Password),
+			"SECRET_HASH": aws.String(SecretHash(inputUser.Username, appClientId, clientSecret)),
 		},
 		ClientId: aws.String(appClientId),
 	}
 
-	//newUserData.SetUserPoolId(userPoolID)
-	//
-
-	//cognitoClient.
 	authResponse, err := cognitoClient.InitiateAuth(&params)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
-	jsondata, _ := json.Marshal(authResponse)
+	jsondata, err := json.Marshal(authResponse)
+
+	if err != nil {
+		return reterr(err)
+	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,

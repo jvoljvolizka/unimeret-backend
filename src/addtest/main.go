@@ -19,6 +19,13 @@ type inlocation struct {
 	Lng float64 `json:"lng"`
 }
 
+func reterr(err error) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusBadRequest,
+		Body:       err.Error(),
+	}, nil
+}
+
 func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	var input inlocation
@@ -27,10 +34,7 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 	err := json.Unmarshal(body, &input)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	hash := geohash.Encode(input.Lat, input.Lng)
@@ -42,15 +46,12 @@ func getdata(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse,
 	err = putItem(&newloc)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       "got it ! btw your life is still just a sad void",
+		Body:       `{ "result" : "success" }`,
 	}, nil
 }
 

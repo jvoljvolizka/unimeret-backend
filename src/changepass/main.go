@@ -17,6 +17,13 @@ type changePassRequest struct {
 	NewPass     string `json:"newpass"`
 }
 
+func reterr(err error) (events.APIGatewayProxyResponse, error) {
+	return events.APIGatewayProxyResponse{
+		StatusCode: http.StatusBadRequest,
+		Body:       err.Error(),
+	}, nil
+}
+
 func changePass(req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	var inputReq changePassRequest
@@ -25,16 +32,13 @@ func changePass(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	err := json.Unmarshal(body, &inputReq)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	if inputReq.AccessToken == "" || inputReq.OldPass == "" || inputReq.NewPass == "" {
 		return events.APIGatewayProxyResponse{
 			StatusCode: http.StatusBadRequest,
-			Body:       "You forgot something mate",
+			Body:       `{"error" : "empty field"}`,
 		}, nil
 	}
 
@@ -43,10 +47,7 @@ func changePass(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 	)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	// Create Cognito service client
@@ -59,18 +60,15 @@ func changePass(req events.APIGatewayProxyRequest) (events.APIGatewayProxyRespon
 		ProposedPassword: aws.String(inputReq.NewPass),
 	}
 
-	passChange, err := cognitoClient.ChangePassword(&params)
+	_, err = cognitoClient.ChangePassword(&params)
 
 	if err != nil {
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusBadRequest,
-			Body:       err.Error(),
-		}, nil
+		return reterr(err)
 	}
 
 	return events.APIGatewayProxyResponse{
 		StatusCode: http.StatusOK,
-		Body:       passChange.String(),
+		Body:       `{ "result" : "success" }`,
 	}, nil
 
 }

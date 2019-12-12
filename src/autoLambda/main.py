@@ -24,7 +24,7 @@ loc = subprocess.check_output((["pwd"]))
 
 loc = loc.decode()
 loc = loc.strip("\n")
-test = subprocess.check_output([ "aws" , "lambda" , "update-function-code" ,  "--function-name" , "goshort-" +  out  , "--zip-file" , "fileb://" + loc + "/unimeret-" +  out + ".zip"])
+test = subprocess.check_output([ "aws" , "lambda" , "update-function-code" ,  "--function-name" , "unimeret-" +  out  , "--zip-file" , "fileb://" + loc + "/unimeret-" +  out + ".zip"])
 
 test = test.decode()
 
